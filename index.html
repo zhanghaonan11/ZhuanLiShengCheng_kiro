@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI专利文件生成器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+        .config-section {
+            background-color: #f8f9fa;
+            padding: 2rem 0;
+        }
+        .generation-section {
+            padding: 2rem 0;
+        }
+        .patent-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .patent-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .patent-header {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .patent-content {
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-badge {
+            font-size: 0.8rem;
+        }
+        .progress-container {
+            margin: 1rem 0;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .patent-preview {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部区域 -->
+    <div class="header-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1><i class="fas fa-lightbulb"></i> AI专利文件生成器</h1>
+                    <p class="lead">智能化专利申请文档生成工具</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI配置区域 -->
+    <div class="config-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h3><i class="fas fa-cog"></i> AI服务配置</h3>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="apiKey" class="form-label">API Key</label>
+                        <input type="password" class="form-control" id="apiKey" placeholder="请输入您的API Key">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="endpointUrl" class="form-label">Endpoint URL</label>
+                        <input type="url" class="form-control" id="endpointUrl" placeholder="https://api.openai.com/v1/chat/completions">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="modelName" class="form-label">模型名称</label>
+                        <select class="form-select" id="modelName">
+                            <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                            <option value="gpt-4">GPT-4</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            <option value="claude-3-opus">Claude-3 Opus</option>
+                            <option value="claude-3-sonnet">Claude-3 Sonnet</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="temperature" class="form-label">创造性参数 (Temperature)</label>
+                        <input type="range" class="form-range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                        <small class="text-muted">当前值: <span id="temperatureValue">0.7</span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 生成区域 -->
+    <div class="generation-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h3><i class="fas fa-magic"></i> 专利生成</h3>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="inventionIdea" class="form-label">发明构思</label>
+                        <textarea class="form-control" id="inventionIdea" rows="6" placeholder="请详细描述您的发明构思，包括技术问题、解决方案、技术特征等..."></textarea>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="generateCount" class="form-label">生成数量</label>
+                        <input type="number" class="form-control" id="generateCount" min="1" max="10" value="1">
+                    </div>
+                    <div class="mb-3">
+                        <button class="btn btn-primary btn-lg w-100" id="generateBtn">
+                            <i class="fas fa-rocket"></i> 批量生成
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <button class="btn btn-success btn-lg w-100" id="downloadBtn" disabled>
+                            <i class="fas fa-download"></i> 批量下载
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-container" id="progressContainer" style="display: none;">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div class="text-center mt-2">
+                    <span id="progressText">准备生成...</span>
+                </div>
+            </div>
+
+            <!-- 生成结果 -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h4><i class="fas fa-file-alt"></i> 生成结果</h4>
+                    <div id="patentResults"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.7.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
